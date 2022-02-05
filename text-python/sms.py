@@ -1,4 +1,7 @@
+from dataclasses import dataclass
 import smtplib
+import json
+
 carriers = {
 	'att':    '@mms.att.net',
 	'tmobile':' @tmomail.net',
@@ -7,14 +10,18 @@ carriers = {
 }
 
 def send(message):
-        # Replace the number with your own, or consider using an argument\dict for multiple people.
-	to_number = '000-000-0000{}'.format(carriers['att'])
-	auth = ('**email**', '**password**')
-
+  data = {}
+  with open("ignored/credentials.JSON") as f:
+    data = json.load(f)
+  
+  # Replace the number with your own, or consider using an argument\dict for multiple people.
+  to_number = f"{data['phone']}{carriers['tmobile']}"
+  auth = (data['email'], data['password'])
+  
 	# Establish a secure session with gmail's outgoing SMTP server using your gmail account
-	server = smtplib.SMTP( "smtp.gmail.com", 587 )
-	server.starttls()
-	server.login(auth[0], auth[1])
+  server = smtplib.SMTP( "smtp.gmail.com", 587 )
+  server.starttls()
+  server.login(auth[0], auth[1])
 
 	# Send text message through SMS gateway of destination number
-	server.sendmail( auth[0], to_number, message)
+  server.sendmail( auth[0], to_number, message)
