@@ -20,30 +20,37 @@ class email_reader():
 
   def single_email_check(self) -> tuple:
     """ Uses the logged in email and returns the latest email. Returns sender, body """
-    data = self.mail.search(None, "ALL")
+    self.mail.select('inbox')
+    data = self.mail.search(None, "UNSEEN")
     mail_ids = data[1]
     id_list = mail_ids[0].split()
+
+    if (len(id_list) < 1):
+      return "", ""
     latest_email_id = int(id_list[-1])
 
     data = self.mail.fetch(str(latest_email_id), '(RFC822)')
+    body = ""
+    email_from = ""
     for response_part in data:
       arr = response_part[0]
       if isinstance(arr, tuple):
-        body = ""
         msg = email.message_from_string(str(arr[1],'utf-8'))
         email_from = msg['from']
-        print('From : ' + email_from + '\n')
         if msg.is_multipart():
           for part in msg.walk():
             ctype = part.get_content_type()
             cdispo = str(part.get('Content-Disposition'))
-
-            # skip any text/plain (txt) attachments
             if ctype == 'text/plain' and 'attachment' not in cdispo:
-              body = part.get_payload(decode=True)  # decode
+              body = part.get_payload(decode=True)
               break
-        # not multipart - i.e. plain text, no attachments, keeping fingers crossed
         else:
           body = msg.get_payload(decode=True)
         
     return email_from, body
+
+if __name__ == '__main__':
+  reader = email_reader()
+  sender, body = reader.single_email_check()
+
+  print(f"From: {sender}, msg: {body}")
